@@ -1,48 +1,44 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-	[Header("Settings")]
-	public float moveSpeed = 5f;
-	public float lookSensitivity = 2f;
-
 	[Header("References")]
-	public Transform cam; // Drag the MainCamera here
+	public Transform playerCamera;
 
-	Vector2 moveInput;
-	Vector2 lookInput;
-	float pitch;
+	[Header("Movement Settings")]
+	public float moveSpeed = 5f;
+	public float mouseSensitivity = 2f;
 
-	CharacterController controller;
-	InputActionAsset input;
+	[Header("Look Limits")]
+	public float minPitch = -90f;
+	public float maxPitch = 90f;
 
-	void Awake()
-	{
-		controller = GetComponent<CharacterController>();
-		input = new InputActionAsset();
-	}
-
-	void OnEnable() => input.Player.Enable();
-	void OnDisable() => input.Player.Disable();
-
-	void Start()
-	{
-		Cursor.lockState = CursorLockMode.Locked;
-	}
+	private float pitch = 0f;
 
 	void Update()
 	{
-		// Look
-		lookInput = input.Player.Look.ReadValue<Vector2>() * lookSensitivity;
-		pitch -= lookInput.y;
-		pitch = Mathf.Clamp(pitch, -90f, 90f);
-		cam.localEulerAngles = new Vector3(pitch, 0, 0);
-		transform.Rotate(Vector3.up * lookInput.x);
+		HandleLook();
+		HandleMovement();
+	}
 
-		// Move
-		moveInput = input.Player.Move.ReadValue<Vector2>();
-		Vector3 move = transform.right * moveInput.x + transform.forward * moveInput.y;
-		controller.Move(move * moveSpeed * Time.deltaTime);
+	void HandleLook()
+	{
+		float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+		float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+
+		pitch -= mouseY;
+		pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+
+		playerCamera.localEulerAngles = new Vector3(pitch, 0f, 0f);
+		transform.Rotate(Vector3.up * mouseX);
+	}
+
+	void HandleMovement()
+	{
+		float x = Input.GetAxis("Horizontal");
+		float z = Input.GetAxis("Vertical");
+
+		Vector3 move = transform.right * x + transform.forward * z;
+		transform.position += move * moveSpeed * Time.deltaTime;
 	}
 }
